@@ -1,0 +1,10 @@
+{
+  "projects": {
+    "web": {
+      "rootDirectory": "apps/web"
+    },
+    "dashboard": {
+      "rootDirectory": "apps/dashboard"
+    }
+  }
+}
