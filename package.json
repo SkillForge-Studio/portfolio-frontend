@@ -1,0 +1,24 @@
+{
+  "name": "portfolio-frontend",
+  "version": "1.0.0",
+  "description": "Монорепозиторій, що містить публічний сайт-портфоліо та CRM-систему.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SkillForge-Studio/portfolio-frontend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SkillForge-Studio/portfolio-frontend/issues"
+  },
+  "homepage": "https://github.com/SkillForge-Studio/portfolio-frontend#readme",
+  "devDependencies": {
+    "turbo": "^2.5.5"
+  }
+}

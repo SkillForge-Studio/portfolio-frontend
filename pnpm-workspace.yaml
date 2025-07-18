@@ -1,0 +1,8 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+  - 'frontend'
+  - 'backend'
+  - '--filter web dev*/node_modules/**'
+  - '--filter web dev*/dist/**'
+  - '--filter web dev*/build/**'
