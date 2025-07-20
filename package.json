@@ -21,7 +21,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/SkillForge-Studio/portfolio-frontend/issues"
   },
@@ -31,6 +31,7 @@
     "turbo": "^2.5.5"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.5.2"
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.52.0"
   }
 }

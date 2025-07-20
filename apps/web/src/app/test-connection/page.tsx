@@ -1,30 +1,24 @@
-import { cookies } from 'next/headers';
-import { createClient } from "../../../../../packages/supabase/server";
+import { createClient } from '@supabase/server' // через alias
 
-export default async function TestConnectionPage() {
-    const cookieStore = cookies();
-    const supabase = createClient(cookieStore);
+export default async function Page() {
+    const supabase = await createClient() // БЕЗ await, бо функція повертає готовий клієнт
 
-    const { data, error } = await supabase.from('test_db_connection').select();
+    const { data, error } = await supabase
+        .from('test_db_connection')
+        .select('*')
 
     if (error) {
-        return (
-            <div className="text-red-600">
-                <strong>Error:</strong> {error.message}
-            </div>
-        );
+        return <div>Помилка: {error.message}</div>
     }
 
     return (
         <div>
-            <h1 className="text-xl font-bold mb-4">Test DB Connection</h1>
-            <ul className="space-y-2">
-                {data?.map((row, i) => (
-                    <li key={i} className="border p-2 rounded">
-                        {JSON.stringify(row)}
-                    </li>
+            <h1>Дані з test_db_connection</h1>
+            <ul>
+                {data?.map((row: any, index: number) => (
+                    <li key={index}>{JSON.stringify(row)}</li>
                 ))}
             </ul>
         </div>
-    );
+    )
 }
