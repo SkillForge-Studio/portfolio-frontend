@@ -1,5 +1,11 @@
 import { createClient } from '@supabase/server' // через alias
 
+export type LogMessage = {
+    id: number
+    created_at: string
+    message: string
+}
+
 export default async function Page() {
     const supabase = await createClient() // БЕЗ await, бо функція повертає готовий клієнт
 
@@ -15,8 +21,10 @@ export default async function Page() {
         <div>
             <h1>Дані з test_db_connection</h1>
             <ul>
-                {data?.map((row: any, index: number) => (
-                    <li key={index}>{JSON.stringify(row)}</li>
+                {data?.map((entry: LogMessage) => (
+                    <li key={entry.id}>
+                        <strong>{new Date(entry.created_at).toLocaleString()}:</strong> {entry.message}
+                    </li>
                 ))}
             </ul>
         </div>
