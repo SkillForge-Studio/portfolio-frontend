@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import React from "react";
 
 export const metadata: Metadata = {
@@ -167,9 +168,10 @@ export default function RootLayout({
                 <div style={{ flex: '1 1 150px' }}>
                     <h3 style={{ marginBottom: '0.5rem' }}>Навігація</h3>
                     <ul style={{ listStyle: 'none', padding: 0, lineHeight: '1.8' }}>
-                        <li><a href="/#projects">Проєкти</a></li>
-                        <li><a href="/#skills">Навички</a></li>
-                        <li><a href="/#contact">Контакти</a></li>
+                        {/*<Link href="/" style={{ ... }}>Головна</Link>*/}
+                        <li><Link href="/#projects">Проєкти</Link></li>
+                        <li><Link href="/#skills">Навички</Link></li>
+                        <li><Link href="/#contact">Контакти</Link></li>
                     </ul>
                 </div>
             </div>
