@@ -25,6 +25,7 @@
 .DS_Store
 *.pem
 usefull_links.txt
+concept_map_template.txt
 
 # debug
 npm-debug.log*
@@ -44,3 +45,10 @@ next-env.d.ts
 
 
 .turbo/
+Template_samples/
+/packages/lib/supabaseEnvTest.ts
+
+
+# tests
+/packages/lib/src/tests
+/packages/lib/node_modules/
