@@ -52,3 +52,4 @@ Template_samples/
 # tests
 /packages/lib/src/tests
 /packages/lib/node_modules/
+/packages/supabase/node_modules/
