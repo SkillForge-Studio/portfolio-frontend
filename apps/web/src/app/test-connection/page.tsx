@@ -69,32 +69,15 @@ export default async function Page() {
             return (
                 <div>
                     <p></p>
-                    <p></p>
-                    <p></p>
-                    <p></p>
-                    <p></p>
-                    <p>Середовище: <strong>{process.env.NODE_ENV}</strong></p>
-                    <p>URL сайту: <strong>{process.env.NEXT_PUBLIC_SITE_URL}</strong></p>
-                    <p></p>
                     <h1>Дані з test_db_connection</h1>
                     <p>Таблиця порожня або не існує</p>
                     <p>URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Not set'}</p>
-
                 </div>
             )
         }
 
         return (
             <div>
-                <p></p>
-                <p></p>
-                <p></p>
-                <p></p>
-                <p></p>
-                <p></p>
-                <p>Середовище: <strong>{process.env.NODE_ENV}</strong></p>
-                <p>URL сайту: <strong>{process.env.NEXT_PUBLIC_SITE_URL}</strong></p>
-                <p></p>
                 <h1>Дані з test_db_connection</h1>
                 <p>Знайдено записів: {data.length}</p>
                 <ul>

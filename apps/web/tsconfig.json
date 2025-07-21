@@ -21,7 +21,9 @@
     "types": ["node", "next"],
     "paths": {
       "@/*": ["./src/*"],
-      "@supabase/*": ["../../packages/supabase/*"]
+      "@supabase": ["../../packages/supabase"],
+      "@supabase/*": ["../../packages/supabase/*"],
+      "@lib/supabase": ["../../packages/supabase/client"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

@@ -2,11 +2,17 @@ import './globals.css';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import React from "react";
+import ClientNavigation from "@/app/components/ClientNavigation";
+// import { useSearchParams, useRouter } from 'next/navigation'
 
 export const metadata: Metadata = {
     title: 'SkillForge - Портфоліо',
     description: 'Макет з Header/Main/Footer',
 };
+
+// Review this decision
+export const dynamic = 'force-dynamic'
+
 
 export default function RootLayout({
                                        children,
@@ -45,41 +51,41 @@ export default function RootLayout({
                     margin: 0,
                     padding: 0
                 }}>
-                    <li><a href="#home" style={{
+                    <li><Link href="/#home" style={{
                         textDecoration: 'none',
                         color: '#171717',
                         padding: '0.5rem 1rem',
                         borderRadius: '4px',
                         transition: 'background-color 0.3s'
-                    }}>Головна</a></li>
-                    <li><a href="#projects" style={{
+                    }}>Головна</Link></li>
+                    <li><Link href="/#projects" style={{
                         textDecoration: 'none',
                         color: '#171717',
                         padding: '0.5rem 1rem',
                         borderRadius: '4px',
                         transition: 'background-color 0.3s'
-                    }}>Проекти</a></li>
-                    <li><a href="#skills" style={{
+                    }}>Проекти</Link></li>
+                    <li><Link href="/#skills" style={{
                         textDecoration: 'none',
                         color: '#171717',
                         padding: '0.5rem 1rem',
                         borderRadius: '4px',
                         transition: 'background-color 0.3s'
-                    }}>Навички</a></li>
-                    <li><a href="#contact" style={{
+                    }}>Навички</Link></li>
+                    <li><Link href="/#roadmap" style={{
                         textDecoration: 'none',
                         color: '#171717',
                         padding: '0.5rem 1rem',
                         borderRadius: '4px',
                         transition: 'background-color 0.3s'
-                    }}>Roadmap</a></li>
-                    <li><a href="#contact" style={{
+                    }}>Roadmap</Link></li>
+                    <li><Link href="/#contact" style={{
                         textDecoration: 'none',
                         color: '#171717',
                         padding: '0.5rem 1rem',
                         borderRadius: '4px',
                         transition: 'background-color 0.3s'
-                    }}>Контакти</a></li>
+                    }}>Контакти</Link></li>
                     <li><a href="/test-connection" style={{
                         textDecoration: 'none',
                         color: '#ff6b35',
@@ -90,33 +96,7 @@ export default function RootLayout({
                     }}>Test DB</a></li>
                 </ul>
             </nav>
-
-            <div style={{
-                display: 'flex',
-                gap: '1rem',
-                alignItems: 'center'
-            }}>
-                <button style={{
-                    background: 'transparent',
-                    border: '1px solid #e0e0e0',
-                    color: '#171717',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    transition: 'all 0.3s'
-                }}>Увійти</button>
-                <button style={{
-                    background: '#171717',
-                    border: '1px solid #171717',
-                    color: '#ffffff',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    transition: 'all 0.3s'
-                }}>Реєстрація</button>
-                </div>
+            <ClientNavigation />
             </div>
         </header>
         <main>
