@@ -24,6 +24,10 @@ function App() {
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
+          <div style={{ marginTop: '1rem', borderTop: '1px solid #ccc', paddingTop: '1rem' }}>
+              <p>Середовище: <strong>{import.meta.env.VITE_APP_ENV}</strong></p>
+              <p>URL сайту: <strong>{import.meta.env.VITE_SITE_URL}</strong></p>
+          </div>
       </div>
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
