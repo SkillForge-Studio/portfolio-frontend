@@ -2,7 +2,7 @@ export default function Home() {
   return (
       <div>
         <section id="home" style={{
-          maxWidth: '1200px',
+          maxWidth: '1400px',
           margin: '0 auto',
           paddingTop: '120px',
           borderBottom: '1px solid #e0e0e0',
@@ -15,7 +15,7 @@ export default function Home() {
         </section>
 
         <section id="projects" style={{
-          maxWidth: '1200px',
+          maxWidth: '1400px',
           margin: '0 auto',
           padding: '2rem 0',
           borderBottom: '1px solid #e0e0e0',
@@ -68,7 +68,7 @@ export default function Home() {
         </section>
 
         <section id="skills" style={{
-          maxWidth: '1200px',
+          maxWidth: '1400px',
           margin: '0 auto',
           padding: '2rem 0',
           borderBottom: '1px solid #e0e0e0',
@@ -87,7 +87,7 @@ export default function Home() {
         </section>
 
         <section id="contact" style={{
-          maxWidth: '1200px',
+          maxWidth: '1400px',
           margin: '0 auto',
           padding: '2rem 0',
           scrollMarginTop: '80px'

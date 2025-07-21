@@ -1,4 +1,3 @@
-// content.tsx
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -42,21 +41,102 @@ export function AuthPageContent() {
         }
     }
 
+    const handleBack = () => {
+        router.push(redirectTo)
+    }
+
     return (
-        <div className="flex items-center justify-center h-screen bg-white">
-            <div className="flex flex-col items-center gap-4 p-8 rounded-lg shadow-lg bg-gray-100">
-                <h1 className="text-xl font-semibold">Увійти / Зареєструватися</h1>
+        <div
+            style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #f3f4f6, #e5e7eb)',
+            }}
+        >
+            <div
+                style={{
+                    width: '100%',
+                    maxWidth: '400px',
+                    background: '#ffffff',
+                    borderRadius: '16px',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                    padding: '2rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '1rem',
+                }}
+            >
+                <h1
+                    style={{
+                        fontSize: '1.5rem',
+                        fontWeight: 'bold',
+                        color: '#111827',
+                        marginBottom: '1rem',
+                        textAlign: 'center',
+                    }}
+                >
+                    Увійти або зареєструватися
+                </h1>
+
                 <button
                     onClick={handleGoogleLogin}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    style={{
+                        width: '100%',
+                        padding: '0.75rem 1rem',
+                        backgroundColor: '#2563eb',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '1rem',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
                 >
-                    Увійти через Google
+                    Google логін
                 </button>
+
                 <button
                     onClick={handleEmailLogin}
-                    className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900"
+                    style={{
+                        width: '100%',
+                        padding: '0.75rem 1rem',
+                        backgroundColor: '#111827',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '1rem',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#000')}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#111827')}
                 >
-                    Увійти через Email
+                    Email логін
+                </button>
+
+                <button
+                    onClick={handleBack}
+                    style={{
+                        width: '100%',
+                        padding: '0.65rem 1rem',
+                        backgroundColor: '#ffffff',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        fontSize: '0.95rem',
+                        cursor: 'pointer',
+                        marginTop: '0.5rem',
+                        transition: 'background-color 0.2s',
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
+                >
+                    ⬅ Назад
                 </button>
             </div>
         </div>
