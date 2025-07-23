@@ -24,7 +24,7 @@ export default function ClientNavigation() {
     const handleLogout = async () => {
         await supabase.auth.signOut();
         setUser(null);
-        router.refresh(); // Оновлює компонент (можна також router.push('/'))
+        router.refresh();
     };
 
     if (user) {
@@ -44,7 +44,7 @@ export default function ClientNavigation() {
                         padding: '0.5rem 1rem',
                         borderRadius: '4px',
                         cursor: 'pointer',
-                        fontSize: '0.9rem',
+                        fontSize: '14px',
                         transition: 'all 0.3s'
                     }}
                 >
@@ -61,7 +61,7 @@ export default function ClientNavigation() {
             alignItems: 'center'
         }}>
             <button
-                onClick={() => router.push(`/Auth?mode=login&redirect=${encodeURIComponent(redirect)}`)}
+                onClick={() => router.push(`/auth?mode=login&redirect=${encodeURIComponent(redirect)}`)}
                 style={{
                     background: 'transparent',
                     border: '1px solid #e0e0e0',
@@ -69,14 +69,14 @@ export default function ClientNavigation() {
                     padding: '0.5rem 1rem',
                     borderRadius: '4px',
                     cursor: 'pointer',
-                    fontSize: '0.9rem',
+                    fontSize: '14px',
                     transition: 'all 0.3s'
                 }}
             >
                 Увійти
             </button>
             <button
-                onClick={() => router.push(`/Auth?mode=register&redirect=${encodeURIComponent(redirect)}`)}
+                onClick={() => router.push(`/auth?mode=register&redirect=${encodeURIComponent(redirect)}`)}
                 style={{
                     background: '#171717',
                     border: '1px solid #171717',
@@ -84,7 +84,7 @@ export default function ClientNavigation() {
                     padding: '0.5rem 1rem',
                     borderRadius: '4px',
                     cursor: 'pointer',
-                    fontSize: '0.9rem',
+                    fontSize: '14px',
                     transition: 'all 0.3s'
                 }}
             >

@@ -13,7 +13,10 @@ export function AuthPageContent() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [isLogin, setIsLogin] = useState(true)
+
+    const mode = searchParams.get('mode')
+    const [isLogin, setIsLogin] = useState(mode !== 'register')
+
     const [error, setError] = useState('')
 
     const [passwordRules, setPasswordRules] = useState({
@@ -22,6 +25,11 @@ export function AuthPageContent() {
         uppercase: false,
         number: false,
     })
+
+    useEffect(() => {
+        const currentMode = searchParams.get('mode')
+        setIsLogin(currentMode !== 'register')
+    }, [searchParams])
 
     const handlePasswordChange = (value: string) => {
         setPassword(value);
@@ -38,11 +46,11 @@ export function AuthPageContent() {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             if (session?.user) {
-                router.replace(redirectTo) // можна додати router.refresh() якщо в Next 13+ App Router
+                router.replace(redirectTo)
+                router.refresh()
             }
         })
 
-        // cleanup
         return () => {
             subscription.unsubscribe()
         }
@@ -89,6 +97,7 @@ export function AuthPageContent() {
                 setError(error.message)
             } else {
                 router.replace(redirectTo)
+                router.refresh()
             }
         } catch (err) {
             setError('Щось пішло не так.')
@@ -98,7 +107,7 @@ export function AuthPageContent() {
     const handleBack = () => router.push(redirectTo)
 
     return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'linear-gradient(135deg, #f3f4f6, #e5e7eb)'}}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh'}}>
             <div style={{ width: '100%', maxWidth: '400px', background: '#fff', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)', padding: '2rem' }}>
                 <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', textAlign: 'center' }}>
                     {isLogin ? 'Вхід' : 'Реєстрація'}

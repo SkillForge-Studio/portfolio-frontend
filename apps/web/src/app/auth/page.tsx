@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react'
-import {AuthPageContent} from "@/app/Auth/content";
+import {AuthPageContent} from "@/app/auth/content";
 
 
 export default function AuthPageWrapper() {

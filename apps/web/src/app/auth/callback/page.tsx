@@ -17,7 +17,7 @@ export default function AuthCallbackPage() {
         const error = urlParams.get('error')
 
         if (error) {
-            router.replace(redirect) // Якщо авторизація не пройшла — просто назад
+            router.replace(redirect)
             return
         }
 
@@ -25,7 +25,7 @@ export default function AuthCallbackPage() {
             if (session?.user) {
                 router.replace(redirect)
             } else {
-                router.replace(`/Auth?redirect=${redirect}`)
+                router.replace(`/auth?redirect=${redirect}`)
             }
         })
     }, [])

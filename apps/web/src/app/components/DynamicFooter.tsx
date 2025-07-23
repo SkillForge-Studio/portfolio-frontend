@@ -5,7 +5,7 @@ import { DefaultFooter, AuthFooter } from './Footer'
 
 export default function DynamicFooter() {
     const pathname = usePathname()
-    const isAuthPage = pathname.startsWith('/Auth')
+    const isAuthPage = pathname.startsWith('/auth')
 
     return isAuthPage ? <AuthFooter /> : <DefaultFooter />
 }

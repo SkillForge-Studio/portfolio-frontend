@@ -4,13 +4,16 @@ export function DefaultFooter() {
     return (
         <footer style={{
             background: '#ffffff',
+            width: '100%',
+            margin: '0 auto',
             borderTop: '1px solid #e0e0e0',
-            padding: '3rem 1rem',
+            padding: '1.5rem 0 0 0',
             fontFamily: 'sans-serif'
         }}>
             <div style={{
-                maxWidth: '1200px',
+                maxWidth: '1400px',
                 margin: '0 auto',
+                padding: '0 20px',
                 display: 'flex',
                 flexWrap: 'wrap',
                 justifyContent: 'space-between',
@@ -29,6 +32,7 @@ export function DefaultFooter() {
                 <div style={{ flex: '1 1 150px' }}>
                     <h3 style={{ marginBottom: '0.5rem' }}>Навігація</h3>
                     <ul style={{ listStyle: 'none', padding: 0, lineHeight: '1.8' }}>
+                        <li><Link href="/#home">Головна</Link></li>
                         <li><Link href="/#projects">Проєкти</Link></li>
                         <li><Link href="/#skills">Навички</Link></li>
                         <li><Link href="/#contact">Контакти</Link></li>
@@ -37,11 +41,12 @@ export function DefaultFooter() {
             </div>
             <div style={{
                 textAlign: 'center',
-                marginTop: '2rem',
+                marginTop: '1.25rem',
+                paddingBottom: '0.85rem',
                 fontSize: '0.875rem',
                 color: '#777'
             }}>
-                <p>© 2025 SkillForge. Всі права захищені.</p>
+                © 2025 SkillForge. Всі права захищені.
             </div>
         </footer>
     )
@@ -56,7 +61,7 @@ export function AuthFooter() {
             right: 0,
             backgroundColor: '#ffffffcc',
             backdropFilter: 'blur(4px)',
-            padding: '0.75rem',
+            padding: '0.85rem',
             fontSize: '0.85rem',
             color: '#444',
             textAlign: 'center',
