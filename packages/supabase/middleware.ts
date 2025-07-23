@@ -1,10 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
-import { type NextRequest, NextResponse } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const createClient = (request: NextRequest) => {
+export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
         request: {
             headers: request.headers,
@@ -24,5 +24,19 @@ export const createClient = (request: NextRequest) => {
         },
     })
 
-    return { supabase, response: supabaseResponse }
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (
+        !user &&
+        !request.nextUrl.pathname.startsWith('/login') &&
+        !request.nextUrl.pathname.startsWith('/auth')
+    ) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        return NextResponse.redirect(url)
+    }
+
+    return supabaseResponse
 }

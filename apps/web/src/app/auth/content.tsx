@@ -13,17 +13,20 @@ export function AuthPageContent() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
 
     const mode = searchParams.get('mode')
     const [isLogin, setIsLogin] = useState(mode !== 'register')
 
     const [error, setError] = useState('')
+    const [success, setSuccess] = useState('')
 
     const [passwordRules, setPasswordRules] = useState({
         length: false,
         lowercase: false,
         uppercase: false,
         number: false,
+        special: false,
     })
 
     useEffect(() => {
@@ -32,14 +35,15 @@ export function AuthPageContent() {
     }, [searchParams])
 
     const handlePasswordChange = (value: string) => {
-        setPassword(value);
+        setPassword(value)
         setPasswordRules({
             length: value.length >= 12,
             lowercase: /[a-z]/.test(value),
             uppercase: /[A-Z]/.test(value),
             number: /[0-9]/.test(value),
-        });
-    };
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(value),
+        })
+    }
 
     useEffect(() => {
         const {
@@ -54,9 +58,7 @@ export function AuthPageContent() {
         return () => {
             subscription.unsubscribe()
         }
-    }, [])
-
-
+    }, [supabase.auth, router, redirectTo])
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -64,43 +66,125 @@ export function AuthPageContent() {
                 router.replace(redirectTo)
             }
         })
-    }, [])
+    }, [supabase.auth, router, redirectTo])
 
-    const passwordValid = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{12,}$/.test(password)
+    // Покращена валідація паролю з додатковою безпекою
+    const passwordValid = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{12,}$/.test(password)
 
     const handleAuth = async () => {
         setError('')
+        setSuccess('')
+        setIsLoading(true)
 
+        // Базова валідація
         if (!email || !password) {
             setError('Введіть email і пароль.')
+            setIsLoading(false)
+            return
+        }
+
+        // Валідація email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(email)) {
+            setError('Введіть коректний email.')
+            setIsLoading(false)
             return
         }
 
         if (!isLogin) {
             if (password !== confirmPassword) {
                 setError('Паролі не співпадають.')
+                setIsLoading(false)
                 return
             }
 
             if (!passwordValid) {
-                setError('Пароль не відповідає вимогам.')
+                setError('Пароль не відповідає всім вимогам безпеки.')
+                setIsLoading(false)
                 return
             }
         }
 
         try {
-            const { error } = isLogin
-                ? await supabase.auth.signInWithPassword({ email, password })
-                : await supabase.auth.signUp({ email, password })
+            if (isLogin) {
+                const { error } = await supabase.auth.signInWithPassword({
+                    email: email.trim().toLowerCase(),
+                    password
+                })
 
-            if (error) {
-                setError(error.message)
+                if (error) {
+                    // Обробка специфічних помилок
+                    switch (error.message) {
+                        case 'Invalid login credentials':
+                            setError('Невірний email або пароль.')
+                            break
+                        case 'Email not confirmed':
+                            setError('Підтвердьте свій email перед входом.')
+                            break
+                        case 'Too many requests':
+                            setError('Занадто багато спроб. Спробуйте пізніше.')
+                            break
+                        default:
+                            setError('Помилка входу. Перевірте дані.')
+                    }
+                } else {
+                    setSuccess('Успішно увійшли!')
+                    setTimeout(() => {
+                        router.replace(redirectTo)
+                        router.refresh()
+                    }, 1000)
+                }
             } else {
-                router.replace(redirectTo)
-                router.refresh()
+                const { error } = await supabase.auth.signUp({
+                    email: email.trim().toLowerCase(),
+                    password,
+                    options: {
+                        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
+                    }
+                })
+
+                if (error) {
+                    switch (error.message) {
+                        case 'User already registered':
+                            setError('Користувач з таким email вже існує.')
+                            break
+                        case 'Password should be at least 6 characters':
+                            setError('Пароль має бути не менше 6 символів.')
+                            break
+                        default:
+                            setError('Помилка реєстрації. Спробуйте ще раз.')
+                    }
+                } else {
+                    setSuccess('Реєстрація успішна! Перевірте email для підтвердження.')
+                }
             }
         } catch (err) {
-            setError('Щось пішло не так.')
+            console.error('Auth error:', err)
+            setError('Щось пішло не так. Спробуйте пізніше.')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleOAuthSignIn = async (provider: 'google' | 'github') => {
+        setError('')
+        setIsLoading(true)
+
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider,
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
+                }
+            })
+
+            if (error) {
+                setError(`Помилка входу через ${provider}. Спробуйте ще раз.`)
+            }
+        } catch (err) {
+            setError('Помилка OAuth авторизації.')
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -152,10 +236,7 @@ export function AuthPageContent() {
 
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                     <button
-                        onClick={async () => {
-                            const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' })
-                            if (error) setError(error.message)
-                        }}
+                        onClick={() => handleOAuthSignIn('google')}
                         style={{ width: '48px', height: '48px', backgroundColor: '#fff', border: '1px solid #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                         aria-label="Google Sign In"
                     >

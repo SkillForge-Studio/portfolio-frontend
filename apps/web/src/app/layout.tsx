@@ -6,6 +6,7 @@ import React, { Suspense } from "react";
 import ClientNavigation from "@/app/components/ClientNavigation"
 import DynamicFooter from "@/app/components/DynamicFooter";
 import NavMenu from "@/app/components/NavMenu";
+import ServerNavigation from "@/app/components/ServerNavigation";
 // import ServerNavigation from "@/app/components/ServerNavigation";
 
 
@@ -54,10 +55,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <NavMenu />
                 </div>
 
-                {/*<ServerNavigation />*/}
-                <Suspense fallback={<div>Loading...</div>}>
-                    <ClientNavigation />
-                </Suspense>
+
+                <ServerNavigation />
+
             </div>
         </header>
 
