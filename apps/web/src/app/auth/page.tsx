@@ -116,7 +116,6 @@ export default function AuthPage() {
                 },
                 body: JSON.stringify(formData),
                 signal: controller.signal,
-                // Додаткові налаштування безпеки
                 credentials: 'same-origin',
                 cache: 'no-cache'
             })

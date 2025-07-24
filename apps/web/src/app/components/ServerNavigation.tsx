@@ -14,15 +14,35 @@ export default async function ServerNavigation() {
     if (!user) {
         return (
             <Link href="/auth">
-                <button>Увійти / Зареєструватися</button>
+                <button style={{
+                    background: 'transparent',
+                    border: '1px solid #e0e0e0',
+                    color: '#171717',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    transition: 'all 0.3s'
+                }}>Увійти / Зареєструватися</button>
             </Link>
         )
     }
 
     return (
         <form action="/logout" method="POST" style={{ display: 'flex', gap: '1rem' }}>
-            <span>{user.email}</span>
-            <button type="submit">Вийти</button>
+            <span style={{
+                alignContent: 'center',
+            }}>{user.email}</span>
+            <button  type="submit" style={{
+                background: 'transparent',
+                border: '1px solid #e0e0e0',
+                color: '#171717',
+                padding: '0.5rem 1rem',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                transition: 'all 0.3s'
+            }}>Вийти</button>
         </form>
     )
 }

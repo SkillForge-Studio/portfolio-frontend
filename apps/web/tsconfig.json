@@ -21,6 +21,9 @@
     "types": ["node", "next"],
     "paths": {
       "@/*": ["./src/*"],
+      "@utils/*": ["../../packages/utils*"],
+      "@lib/*": ["../../packages/lib*"],
+      "@ui/*": ["../../packages/ui*"],
       "@supabase": ["../../packages/supabase"],
       "@supabase/*": ["../../packages/supabase/*"],
       "@lib/supabase": ["../../packages/supabase/client"]

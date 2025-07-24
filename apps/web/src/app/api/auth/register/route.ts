@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/server'
 import { z } from 'zod'
+import {getURL} from "../../../../../lib/getURLs";
+
 
 // Rate limiting для реєстрації (менш суворий)
 const registerAttempts = new Map<string, { count: number; lastAttempt: number }>()
@@ -82,7 +84,8 @@ export async function POST(request: NextRequest) {
             email: validatedData.email,
             password: validatedData.password,
             options: {
-                emailRedirectTo: `${request.nextUrl.origin}/auth/callback`,
+                // emailRedirectTo: `${request.nextUrl.origin}/auth/callback`,
+                emailRedirectTo: `${getURL()}auth/callback`,
             }
         })
 
