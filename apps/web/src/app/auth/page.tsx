@@ -17,7 +17,7 @@ interface AuthResponse {
 
 // Константи для валідації
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const MIN_PASSWORD_LENGTH = 8
+const MIN_PASSWORD_LENGTH = 12
 const MAX_PASSWORD_LENGTH = 128
 const MAX_EMAIL_LENGTH = 254
 
