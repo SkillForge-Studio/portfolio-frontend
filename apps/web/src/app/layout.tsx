@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import React, { Suspense } from "react";
 // import { usePathname } from 'next/navigation'
-import ClientNavigation from "@/app/components/ClientNavigation"
+// import ClientNavigation from "@/app/components/ClientNavigation"
 import DynamicFooter from "@/app/components/DynamicFooter";
 import NavMenu from "@/app/components/NavMenu";
 import ServerNavigation from "@/app/components/ServerNavigation";
