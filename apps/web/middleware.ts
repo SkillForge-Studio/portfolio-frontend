@@ -5,7 +5,7 @@ import { updateSession } from '@supabase/middleware'
 // Допустимі origin для різних середовищ
 const allowedOrigins = process.env.NODE_ENV === 'production'
     ? ['https://skillforge-portfolio.vercel.app']
-    : ['https://preview-skillforge-portfolio.vercel.app', 'http://localhost:3000']
+    : ['http://localhost:3000', 'http://localhost:3001', 'https://preview-skillforge-portfolio.vercel.app']
 
 // Список публічних маршрутів
 const PUBLIC_PATHS = [
@@ -41,7 +41,7 @@ const CSP_HEADER = [
     "form-action 'self'"
 ].join('; ')
 
-function isOriginAllowed(origin: string): boolean {
+function isOriginAllowed(origin: string | null): boolean {
     if (!origin) return false
 
     return allowedOrigins.some(allowedOrigin => {
@@ -58,8 +58,23 @@ function isOriginAllowed(origin: string): boolean {
     })
 }
 
+function addCorsHeaders(response: NextResponse, origin: string | null): NextResponse {
+    const isAllowedOrigin = isOriginAllowed(origin)
+
+    if (isAllowedOrigin && origin) {
+        response.headers.set('Access-Control-Allow-Origin', origin)
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
+    }
+
+    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+    response.headers.set('Access-Control-Max-Age', '86400')
+
+    return response
+}
+
 export async function middleware(request: NextRequest) {
-    const origin = request.headers.get('origin') || ''
+    const origin = request.headers.get('origin')
     const { pathname } = request.nextUrl
 
     console.log('Middleware:', {
@@ -74,29 +89,12 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next()
     }
 
-    const isAllowedOrigin = isOriginAllowed(origin)
-
     // 2. Обробка preflight-запиту (OPTIONS)
     if (request.method === 'OPTIONS') {
-        console.log('OPTIONS request:', { origin, isAllowedOrigin })
+        console.log('OPTIONS request:', { origin, isAllowedOrigin: isOriginAllowed(origin) })
 
-        const headers: Record<string, string> = {
-            'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin',
-            'Access-Control-Max-Age': '86400',
-            'Content-Length': '0'
-        }
-
-        // Тільки для дозволених origin додаємо CORS заголовки
-        if (isAllowedOrigin) {
-            headers['Access-Control-Allow-Origin'] = origin
-            headers['Access-Control-Allow-Credentials'] = 'true'
-        }
-
-        return new NextResponse(null, {
-            status: 200, // Змінено з 204 на 200
-            headers
-        })
+        const response = new NextResponse(null, { status: 200 })
+        return addCorsHeaders(response, origin)
     }
 
     // 3. Створюємо відповідь для всіх інших запитів
@@ -117,14 +115,8 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // 5. Додаємо CORS заголовки для дозволених origin
-    if (isAllowedOrigin) {
-        response.headers.set('Access-Control-Allow-Origin', origin)
-        response.headers.set('Access-Control-Allow-Credentials', 'true')
-    }
-
-    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+    // 5. Додаємо CORS заголовки
+    response = addCorsHeaders(response, origin)
 
     // 6. Security Headers
     response.headers.set('X-Frame-Options', 'DENY')
@@ -148,7 +140,8 @@ export async function middleware(request: NextRequest) {
 
         const contentLength = request.headers.get('content-length')
         if (contentLength && parseInt(contentLength) > 1024 * 1024) {
-            return new NextResponse('Payload too large', { status: 413 })
+            const errorResponse = new NextResponse('Payload too large', { status: 413 })
+            return addCorsHeaders(errorResponse, origin)
         }
     }
 
