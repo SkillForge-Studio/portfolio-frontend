@@ -4,8 +4,8 @@ import { updateSession } from '@supabase/middleware'
 
 // Допустимі origin для різних середовищ
 const allowedOrigins = process.env.NODE_ENV === 'production'
-    ? ['https://skillforge-portfolio.vercel.app', 'https://skillforge-portfolio.vercel.app/']
-    : ['https://preview-skillforge-portfolio.vercel.app', 'https://preview-skillforge-portfolio.vercel.app/', 'http://localhost:3000', 'http://localhost:3000/']
+    ? ['https://skillforge-portfolio.vercel.app']
+    : ['https://preview-skillforge-portfolio.vercel.app', 'http://localhost:3000']
 
 // Список публічних маршрутів
 const PUBLIC_PATHS = [
@@ -43,12 +43,17 @@ const CSP_HEADER = [
 
 export async function middleware(request: NextRequest) {
     const origin = request.headers.get('origin') || ''
-    console.log('CORS origin:', origin, 'Method:', request.method)
     const { pathname } = request.nextUrl
+
+    // Порiвняння початку origin (щоб включати порти, піддомени)
+    const isAllowedOrigin = allowedOrigins.some(allowedOrigin => origin.startsWith(allowedOrigin))
+
+    // Лог для дебагу
+    console.log('Middleware CORS:', { origin, isAllowedOrigin, method: request.method, pathname })
     // const origin = request.headers.get('origin') || ''
 
     // Перевірка чи origin дозволений
-    const isAllowedOrigin = allowedOrigins.includes(origin)
+    // const isAllowedOrigin = allowedOrigins.includes(origin)
 
     // 1. Обробка preflight-запиту (OPTIONS)
     if (request.method === 'OPTIONS') {
