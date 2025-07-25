@@ -2,12 +2,10 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@supabase/middleware'
 
-const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Credentials': 'true'
-}
+// Допустимі origin для різних середовищ
+const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? ['https://skillforge-portfolio.vercel.app']
+    : ['https://preview-skillforge-portfolio.vercel.app', 'http://localhost:3000']
 
 // Список публічних маршрутів
 const PUBLIC_PATHS = [
@@ -45,15 +43,23 @@ const CSP_HEADER = [
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
+    const origin = request.headers.get('origin') || ''
+
+    // Перевірка чи origin дозволений
+    const isAllowedOrigin = allowedOrigins.includes(origin)
 
     // 1. Обробка preflight-запиту (OPTIONS)
     if (request.method === 'OPTIONS') {
         return new NextResponse(null, {
             status: 204,
             headers: {
-                ...CORS_HEADERS,
-                'Content-Length': '0',
-            },
+                'Access-Control-Allow-Origin': isAllowedOrigin ? origin : 'null',
+                'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                'Access-Control-Allow-Credentials': 'true',
+                'Access-Control-Max-Age': '86400',
+                'Content-Length': '0'
+            }
         })
     }
 
@@ -65,10 +71,14 @@ export async function middleware(request: NextRequest) {
     // 3. Створюємо відповідь
     const response = NextResponse.next()
 
-    // 4. Додаємо CORS заголовки
-    Object.entries(CORS_HEADERS).forEach(([key, value]) => {
-        response.headers.set(key, value)
-    })
+    // 4. Додаємо CORS заголовки динамічно
+    if (isAllowedOrigin) {
+        response.headers.set('Access-Control-Allow-Origin', origin)
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
+    }
+
+    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
     // 5. Security Headers
     response.headers.set('X-Frame-Options', 'DENY')
@@ -96,7 +106,7 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // 8. Пропускаємо публічні маршрути
+    // 8. Пропускаємо публічні маршрути без авторизації
     const isPublicPath = PUBLIC_PATHS.some(path => pathname.startsWith(path))
     if (isPublicPath) {
         return response
