@@ -89,10 +89,11 @@ export async function middleware(request: NextRequest) {
 
     // 2. Обробка preflight-запиту (OPTIONS)
     if (request.method === 'OPTIONS') {
-        console.log('OPTIONS request:', { origin, isAllowedOrigin: isOriginAllowed(origin) })
-
-        const response = NextResponse.json({}, { status: 200 })
-        return addCorsHeaders(response, origin)
+        return NextResponse.next()
+        // console.log('OPTIONS request:', { origin, isAllowedOrigin: isOriginAllowed(origin) })
+        //
+        // const response = NextResponse.json({}, { status: 200 })
+        // return addCorsHeaders(response, origin)
     }
 
     // 3. Створюємо відповідь для всіх інших запитів
