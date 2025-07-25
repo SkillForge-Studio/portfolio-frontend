@@ -1,11 +1,4 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
   "routes": [
     {
       "src": "/api/(.*)",
@@ -22,13 +15,11 @@
     }
   ],
   "functions": {
-    "src/app/api/**/*.ts": {
-      "maxDuration": 30,
-      "memory": 1024
+    "src/app/api/**/*.{js,ts}": {
+      "maxDuration": 30
     },
-    "src/app/auth/**/*.ts": {
-      "maxDuration": 10,
-      "memory": 512
+    "src/app/auth/**/*.{js,ts}": {
+      "maxDuration": 20
     }
   },
   "headers": [
@@ -48,21 +39,6 @@
           "value": "strict-origin-when-cross-origin"
         }
       ]
-    },
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/auth/(.*)",
-      "destination": "/src/app/api/auth/$1"
     }
   ]
 }
