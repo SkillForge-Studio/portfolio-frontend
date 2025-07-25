@@ -3,7 +3,9 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@supabase/middleware'
 
 // Допустимі origin для різних середовищ
-const allowedOrigins = ['https://skillforge-portfolio.vercel.app', 'https://preview-skillforge-portfolio.vercel.app', 'http://localhost:3000', 'https://preview-skillforge-portfolio.vercel.app']
+const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? ['https://skillforge-portfolio.vercel.app', 'https://preview-skillforge-portfolio.vercel.app', 'https://skillforge-dashboard.vercel.app']
+    : ['http://localhost:3000', 'https://preview-skillforge-portfolio.vercel.app', 'https://preview-skillforge-dashboard.vercel.app/', 'http://localhost:5173']
 
 // Список публічних маршрутів
 const PUBLIC_PATHS = [
@@ -89,10 +91,9 @@ export async function middleware(request: NextRequest) {
 
     // 2. Обробка preflight-запиту (OPTIONS)
     if (request.method === 'OPTIONS') {
-        // return NextResponse.next()
-        // console.log('OPTIONS request:', { origin, isAllowedOrigin: isOriginAllowed(origin) })
+        console.log('OPTIONS request:', { origin, isAllowedOrigin: isOriginAllowed(origin) })
 
-        const response = NextResponse.json({}, { status: 200 })
+        const response = new NextResponse(null, { status: 200 })
         return addCorsHeaders(response, origin)
     }
 
