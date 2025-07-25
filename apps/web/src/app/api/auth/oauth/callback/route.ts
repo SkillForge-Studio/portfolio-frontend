@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {User} from "@supabase/auth-helpers-nextjs";
+import {getURL} from "../../../../../../lib/getURLs";
 
 // Валідація callback параметрів
 const callbackSchema = z.object({
@@ -68,7 +69,6 @@ async function ensureUserProfile(
 export async function GET(request: NextRequest) {
     try {
         const requestUrl = new URL(request.url)
-        const origin = requestUrl.origin
 
         // Перевіряємо на помилки OAuth
         const error = requestUrl.searchParams.get('error')
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
 
             const userFriendlyError = errorMessages[error as keyof typeof errorMessages] || 'Помилка OAuth авторизації'
 
-            return NextResponse.redirect(`${origin}/auth?error=${encodeURIComponent(userFriendlyError)}`)
+            return NextResponse.redirect(`${getURL()}/auth?error=${encodeURIComponent(userFriendlyError)}`)
         }
 
         // Валідуємо параметри
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
         const state = requestUrl.searchParams.get('state')
 
         if (!code) {
-            return NextResponse.redirect(`${origin}/auth?error=${encodeURIComponent('Відсутній код авторизації')}`)
+            return NextResponse.redirect(`${getURL()}/auth?error=${encodeURIComponent('Відсутній код авторизації')}`)
         }
 
         // Перевіряємо state для CSRF захисту (якщо використовується)
@@ -122,11 +122,11 @@ export async function GET(request: NextRequest) {
                 ip: request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
             })
 
-            return NextResponse.redirect(`${origin}/auth?error=${encodeURIComponent('Помилка створення сесії')}`)
+            return NextResponse.redirect(`${getURL()}/auth?error=${encodeURIComponent('Помилка створення сесії')}`)
         }
 
         if (!sessionData.user) {
-            return NextResponse.redirect(`${origin}/auth?error=${encodeURIComponent('Користувач не знайдений')}`)
+            return NextResponse.redirect(`${getURL()}/auth?error=${encodeURIComponent('Користувач не знайдений')}`)
         }
 
         const user = sessionData.user
@@ -151,7 +151,7 @@ export async function GET(request: NextRequest) {
         const redirectPath = isNewUser ? '/' : '/'
 
         // Додаємо параметри для кращого UX
-        const redirectUrl = new URL(redirectPath, origin)
+        const redirectUrl = new URL(redirectPath, getURL())
         if (isNewUser) {
             redirectUrl.searchParams.set('new_user', 'true')
         }
@@ -169,7 +169,7 @@ export async function GET(request: NextRequest) {
             ip: request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
         })
 
-        return NextResponse.redirect(`${request.nextUrl.origin}/auth?error=${encodeURIComponent('Помилка обробки авторизації')}`)
+        return NextResponse.redirect(`${getURL()}/auth?error=${encodeURIComponent('Помилка обробки авторизації')}`)
     }
 }
 

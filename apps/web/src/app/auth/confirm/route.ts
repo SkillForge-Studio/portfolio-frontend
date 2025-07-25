@@ -22,5 +22,9 @@ export async function GET(request: NextRequest) {
         }
     }
 
+    if (!next.startsWith('/')) {
+        redirect('/error?message=Невірний шлях для переходу')
+    }
+
     redirect(`/error?message=${encodeURIComponent(error?.message || 'Unknown error')}`)
 }

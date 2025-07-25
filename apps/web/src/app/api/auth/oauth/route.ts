@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase'
 import { z } from 'zod'
+import {getURL} from "../../../../../lib/getURLs";
 
 const oauthSchema = z.object({
     provider: z.enum(['google', 'github', 'facebook']),
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
 
         // Створюємо OAuth URL
         // const redirectTo = validatedData.redirectTo || `${request.nextUrl.origin}/auth/callback`
-        const redirectTo = `${request.nextUrl.origin}/api/auth/oauth/callback`
+        const redirectTo = `${getURL()}/api/auth/oauth/callback`
 
 
         const { data, error } = await supabase.auth.signInWithOAuth({
