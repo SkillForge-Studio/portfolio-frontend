@@ -15,6 +15,13 @@ interface AuthResponse {
     message?: string
 }
 
+interface OAuthResponse {
+    success: boolean
+    url?: string
+    provider?: string
+    error?: string
+}
+
 // Константи для валідації
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PASSWORD_LENGTH = 12
@@ -51,6 +58,7 @@ export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const [oauthLoading, setOauthLoading] = useState<string | null>(null)
     const [fieldErrors, setFieldErrors] = useState<{email?: string, password?: string}>({})
 
     // Валідація в реальному часі
@@ -83,6 +91,69 @@ export default function AuthPage() {
         setPassword(value)
         validateField('password', value)
     }, [validateField])
+
+    // Серверна обробка OAuth
+    const handleOAuth = async (provider: string) => {
+        try {
+            setOauthLoading(provider)
+            setError(null)
+
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+            const response = await fetch('/api/auth/oauth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    provider,
+                    redirectTo: `${window.location.origin}/auth/callback`
+                }),
+                signal: controller.signal,
+                credentials: 'same-origin',
+                cache: 'no-cache'
+            })
+
+            clearTimeout(timeoutId)
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    throw new Error('Занадто багато спроб. Спробуйте пізніше')
+                }
+                if (response.status >= 500) {
+                    throw new Error('Помилка сервера. Спробуйте пізніше')
+                }
+
+                const errorData: OAuthResponse = await response.json()
+                throw new Error(errorData.error || 'Помилка OAuth')
+            }
+
+            const data: OAuthResponse = await response.json()
+
+            if (!data.success || !data.url) {
+                throw new Error(data.error || 'Помилка ініціалізації OAuth')
+            }
+
+            // Перенаправляємо користувача на OAuth провайдер
+            window.location.href = data.url
+
+        } catch (err) {
+            if (err instanceof Error) {
+                if (err.name === 'AbortError') {
+                    setError('Запит перевищив час очікування')
+                } else {
+                    const errorMessage = err.message.slice(0, 200)
+                    setError(errorMessage)
+                }
+            } else {
+                setError('Невідома помилка OAuth')
+            }
+        } finally {
+            setOauthLoading(null)
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -176,6 +247,7 @@ export default function AuthPage() {
 
     // Перевіряємо чи форма валідна
     const isFormValid = email && password && !fieldErrors.email && !fieldErrors.password && !isLoading
+    const isAnyLoading = isLoading || oauthLoading !== null
 
 
     return (
@@ -206,7 +278,8 @@ export default function AuthPage() {
                             padding: '12px',
                             border: fieldErrors.email ? '2px solid #e74c3c' : '1px solid #ddd',
                             borderRadius: '4px',
-                            fontSize: '16px' // Запобігає zoom на iOS
+                            fontSize: '16px',
+                            boxSizing: 'border-box',
                         }}
                         aria-invalid={!!fieldErrors.email}
                         aria-describedby={fieldErrors.email ? 'email-error' : undefined}
@@ -232,7 +305,8 @@ export default function AuthPage() {
                             padding: '12px',
                             border: fieldErrors.password ? '2px solid #e74c3c' : '1px solid #ddd',
                             borderRadius: '4px',
-                            fontSize: '16px'
+                            fontSize: '16px',
+                            boxSizing: 'border-box',
                         }}
                         aria-invalid={!!fieldErrors.password}
                         aria-describedby={fieldErrors.password ? 'password-error' : undefined}
@@ -277,6 +351,25 @@ export default function AuthPage() {
                 </button>
             </form>
 
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                <button
+                    type="button"
+                    onClick={() => handleOAuth('google')}
+                    disabled={isAnyLoading}
+                    style={{
+                        padding: '10px 20px',
+                        backgroundColor: '#db4437',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                    }}
+                >
+                    Увійти через Google
+                </button>
+            </div>
+
             <p style={{ marginTop: '20px', textAlign: 'center' }}>
                 {isLogin ? 'Немає акаунту?' : 'Вже маєте акаунт?'}{' '}
                 <button
@@ -299,80 +392,3 @@ export default function AuthPage() {
         </div>
     )
 }
-
-
-// // apps/web/app/auth/page.tsx
-// 'use client'
-//
-// import React, { useState } from 'react'
-// import { createBrowserClient } from '@supabase'
-// import { useRouter } from 'next/navigation'
-//
-// export default function AuthPage() {
-//     const supabase = createBrowserClient()
-//     const router = useRouter()
-//
-//     const [email, setEmail] = useState('')
-//     const [password, setPassword] = useState('')
-//     const [isLogin, setIsLogin] = useState(true)
-//     const [error, setError] = useState<string | null>(null)
-//
-//     const handleSubmit = async (e: React.FormEvent) => {
-//         e.preventDefault()
-//         setError(null)
-//
-//         const { error } = isLogin
-//             ? await supabase.auth.signInWithPassword({ email, password })
-//             : await supabase.auth.signUp({ email, password })
-//
-//         if (error) {
-//             setError(error.message)
-//         } else {
-//             // await fetch('api/auth/callback')
-//             // router.push('/')
-//             await supabase.auth.signInWithPassword({ email, password })
-//             router.push('/')
-//             router.refresh()
-//         }
-//     }
-//
-//     return (
-//         <div style={{ maxWidth: '400px', margin: '100px auto' }}>
-//             <h2>{isLogin ? 'Sign In' : 'Sign Up'}</h2>
-//
-//             <form onSubmit={handleSubmit}>
-//                 <input
-//                     type="email"
-//                     placeholder="Email"
-//                     value={email}
-//                     onChange={e => setEmail(e.target.value)}
-//                     required
-//                     style={{ width: '100%', marginBottom: 10, padding: 8 }}
-//                 />
-//                 <input
-//                     type="password"
-//                     placeholder="Password"
-//                     value={password}
-//                     onChange={e => setPassword(e.target.value)}
-//                     required
-//                     style={{ width: '100%', marginBottom: 10, padding: 8 }}
-//                 />
-//                 {error && <p style={{ color: 'red' }}>{error}</p>}
-//                 <button type="submit" style={{ width: '100%', padding: 8 }}>
-//                     {isLogin ? 'Sign In' : 'Sign Up'}
-//                 </button>
-//             </form>
-//
-//             <p style={{ marginTop: 12 }}>
-//                 {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-//                 <button
-//                     type="button"
-//                     onClick={() => setIsLogin(!isLogin)}
-//                     style={{ color: 'blue', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-//                 >
-//                     {isLogin ? 'Sign Up' : 'Sign In'}
-//                 </button>
-//             </p>
-//         </div>
-//     )
-// }

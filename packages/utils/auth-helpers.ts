@@ -1,4 +1,4 @@
-// utils/auth-helpers.ts - Допоміжні функції для валідації
+// auth/auth-helpers.ts - Допоміжні функції для валідації
 export const authHelpers = {
     // Валідація email
     isValidEmail: (email: string): boolean => {
