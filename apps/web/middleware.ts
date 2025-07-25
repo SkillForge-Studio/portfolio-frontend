@@ -4,7 +4,7 @@ import { updateSession } from '@supabase/middleware'
 
 // Допустимі origin для різних середовищ
 const allowedOrigins = process.env.NODE_ENV === 'production'
-    ? ['https://skillforge-portfolio.vercel.app']
+    ? ['https://skillforge-portfolio.vercel.app', 'https://preview-skillforge-portfolio.vercel.app']
     : ['http://localhost:3000', 'http://localhost:3001', 'https://preview-skillforge-portfolio.vercel.app']
 
 // Список публічних маршрутів
@@ -93,7 +93,7 @@ export async function middleware(request: NextRequest) {
     if (request.method === 'OPTIONS') {
         console.log('OPTIONS request:', { origin, isAllowedOrigin: isOriginAllowed(origin) })
 
-        const response = new NextResponse(null, { status: 200 })
+        const response = NextResponse.json({}, { status: 200 })
         return addCorsHeaders(response, origin)
     }
 
