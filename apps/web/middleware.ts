@@ -41,57 +41,92 @@ const CSP_HEADER = [
     "form-action 'self'"
 ].join('; ')
 
+function isOriginAllowed(origin: string): boolean {
+    if (!origin) return false
+
+    return allowedOrigins.some(allowedOrigin => {
+        // Точне співпадіння
+        if (origin === allowedOrigin) return true
+
+        // Для development дозволяємо різні порти localhost
+        if (process.env.NODE_ENV !== 'production' &&
+            origin.startsWith('http://localhost:')) {
+            return true
+        }
+
+        return false
+    })
+}
+
 export async function middleware(request: NextRequest) {
     const origin = request.headers.get('origin') || ''
     const { pathname } = request.nextUrl
 
-    // Порiвняння початку origin (щоб включати порти, піддомени)
-    const isAllowedOrigin = allowedOrigins.some(allowedOrigin => origin.startsWith(allowedOrigin))
+    console.log('Middleware:', {
+        origin,
+        method: request.method,
+        pathname,
+        userAgent: request.headers.get('user-agent')?.slice(0, 50)
+    })
 
-    // Лог для дебагу
-    console.log('Middleware CORS:', { origin, isAllowedOrigin, method: request.method, pathname })
-    // const origin = request.headers.get('origin') || ''
-
-    // Перевірка чи origin дозволений
-    // const isAllowedOrigin = allowedOrigins.includes(origin)
-
-    // 1. Обробка preflight-запиту (OPTIONS)
-    if (request.method === 'OPTIONS') {
-        if (!origin || !isAllowedOrigin) {
-            return new NextResponse(null, { status: 204 })
-        }
-
-        return new NextResponse(null, {
-            status: 204,
-            headers: {
-                'Access-Control-Allow-Origin': isAllowedOrigin ? origin : 'null',
-                'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-                'Access-Control-Allow-Credentials': 'true',
-                'Access-Control-Max-Age': '86400',
-                'Content-Length': '0'
-            }
-        })
-    }
-
-    // 2. Пропускаємо статичні ресурси
+    // 1. Пропускаємо статичні ресурси без обробки
     if (STATIC_PATHS.some(path => pathname.startsWith(path))) {
         return NextResponse.next()
     }
 
-    // 3. Створюємо відповідь
-    const response = NextResponse.next()
+    const isAllowedOrigin = isOriginAllowed(origin)
 
-    // 4. Додаємо CORS заголовки динамічно
+    // 2. Обробка preflight-запиту (OPTIONS)
+    if (request.method === 'OPTIONS') {
+        console.log('OPTIONS request:', { origin, isAllowedOrigin })
+
+        const headers: Record<string, string> = {
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin',
+            'Access-Control-Max-Age': '86400',
+            'Content-Length': '0'
+        }
+
+        // Тільки для дозволених origin додаємо CORS заголовки
+        if (isAllowedOrigin) {
+            headers['Access-Control-Allow-Origin'] = origin
+            headers['Access-Control-Allow-Credentials'] = 'true'
+        }
+
+        return new NextResponse(null, {
+            status: 200, // Змінено з 204 на 200
+            headers
+        })
+    }
+
+    // 3. Створюємо відповідь для всіх інших запитів
+    let response: NextResponse
+
+    // 4. Перевіряємо чи це публічний маршрут
+    const isPublicPath = PUBLIC_PATHS.some(path => pathname.startsWith(path))
+
+    if (isPublicPath) {
+        response = NextResponse.next()
+    } else {
+        // Захищені маршрути – перевірка автентифікації
+        try {
+            response = await updateSession(request)
+        } catch (error) {
+            console.error('Auth error:', error)
+            response = NextResponse.redirect(new URL('/login', request.url))
+        }
+    }
+
+    // 5. Додаємо CORS заголовки для дозволених origin
     if (isAllowedOrigin) {
         response.headers.set('Access-Control-Allow-Origin', origin)
         response.headers.set('Access-Control-Allow-Credentials', 'true')
     }
 
     response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
 
-    // 5. Security Headers
+    // 6. Security Headers
     response.headers.set('X-Frame-Options', 'DENY')
     response.headers.set('X-Content-Type-Options', 'nosniff')
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
@@ -99,12 +134,12 @@ export async function middleware(request: NextRequest) {
     response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
     response.headers.set('Content-Security-Policy', CSP_HEADER)
 
-    // 6. HSTS в production
+    // 7. HSTS в production
     if (process.env.NODE_ENV === 'production') {
         response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
     }
 
-    // 7. API-specific headers
+    // 8. API-specific headers
     if (pathname.startsWith('/api/')) {
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
             request.headers.get('x-real-ip') ||
@@ -117,14 +152,7 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // 8. Пропускаємо публічні маршрути без авторизації
-    const isPublicPath = PUBLIC_PATHS.some(path => pathname.startsWith(path))
-    if (isPublicPath) {
-        return response
-    }
-
-    // 9. Захищені маршрути – перевірка автентифікації
-    return await updateSession(request)
+    return response
 }
 
 
