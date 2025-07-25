@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import LogoutButton from "@/app/components/LogoutButton";
 
 export default async function ServerNavigation() {
     const supabase = await createServerClient()
@@ -29,21 +30,12 @@ export default async function ServerNavigation() {
     }
 
     return (
-        <form action="/logout" method="POST" style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem' }}>
             <span style={{
                 alignContent: 'center',
             }}>{user.email}</span>
-            <button  type="submit" style={{
-                background: 'transparent',
-                border: '1px solid #e0e0e0',
-                color: '#171717',
-                padding: '0.5rem 1rem',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                transition: 'all 0.3s'
-            }}>Вийти</button>
-        </form>
+            <LogoutButton />
+        </div>
     )
 }
 
