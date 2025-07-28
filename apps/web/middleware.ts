@@ -5,7 +5,7 @@ import { updateSession } from '@supabase/middleware'
 // Допустимі origin для різних середовищ
 const allowedOrigins = process.env.NODE_ENV === 'production'
     ? ['https://skillforge-portfolio.vercel.app', 'https://preview-skillforge-portfolio.vercel.app', 'https://skillforge-dashboard.vercel.app']
-    : ['http://localhost:3000', 'https://preview-skillforge-portfolio.vercel.app', 'https://preview-skillforge-dashboard.vercel.app/', 'http://localhost:5173']
+    : ['http://localhost:3000', 'https://preview-skillforge-portfolio.vercel.app', 'https://preview-skillforge-dashboard.vercel.app/', 'http://localhost:5173', 'http://localhost:4000']
 
 // Список публічних маршрутів
 const PUBLIC_PATHS = [
@@ -15,6 +15,8 @@ const PUBLIC_PATHS = [
     '/register',
     '/forgot-password',
     '/reset-password',
+    '/auth/confirm',
+    '/auth/callback',
     '/api/auth',
     '/api/health'
 ]
@@ -77,12 +79,12 @@ export async function middleware(request: NextRequest) {
     const origin = request.headers.get('origin')
     const { pathname } = request.nextUrl
 
-    console.log('Middleware:', {
-        origin,
-        method: request.method,
-        pathname,
-        userAgent: request.headers.get('user-agent')?.slice(0, 50)
-    })
+    // console.log('Middleware:', {
+    //     origin,
+    //     method: request.method,
+    //     pathname,
+    //     userAgent: request.headers.get('user-agent')?.slice(0, 50)
+    // })
 
     // 1. Пропускаємо статичні ресурси без обробки
     if (STATIC_PATHS.some(path => pathname.startsWith(path))) {

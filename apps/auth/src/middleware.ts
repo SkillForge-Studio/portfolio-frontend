@@ -1,6 +1,7 @@
 // web/middleware.ts
 import { type NextRequest, NextResponse } from 'next/server'
-import { updateSession } from '@supabase'
+import {updateSession} from "@supabase";
+// import { updateSession } from '@supabase/middleware'
 
 // Допустимі origin для різних середовищ
 const allowedOrigins = process.env.NODE_ENV === 'production'
@@ -79,12 +80,12 @@ export async function middleware(request: NextRequest) {
     const origin = request.headers.get('origin')
     const { pathname } = request.nextUrl
 
-    console.log('Middleware:', {
-        origin,
-        method: request.method,
-        pathname,
-        userAgent: request.headers.get('user-agent')?.slice(0, 50)
-    })
+    // console.log('Middleware:', {
+    //     origin,
+    //     method: request.method,
+    //     pathname,
+    //     userAgent: request.headers.get('user-agent')?.slice(0, 50)
+    // })
 
     // 1. Пропускаємо статичні ресурси без обробки
     if (STATIC_PATHS.some(path => pathname.startsWith(path))) {

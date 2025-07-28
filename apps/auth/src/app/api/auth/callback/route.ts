@@ -1,4 +1,4 @@
-// apps/web/app/api/auth/callback/route.ts
+// apps/auth/app/api/auth/callback/route.ts
 import { createServerClient } from '@supabase'
 import { NextRequest, NextResponse } from 'next/server'
 import {selfGetURL} from "@/lib/getURLs";

@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@supabase": ["src/lib/supabase"]
+      "@supabase": ["../../packages/supabase"],
+//      "@supabase": ["src/lib/supabase"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

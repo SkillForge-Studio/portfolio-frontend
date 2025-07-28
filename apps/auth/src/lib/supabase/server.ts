@@ -143,7 +143,7 @@ export async function checkUserRole(requiredRole: string) {
 
 // Функція для безпечного виконання операцій з БД
 export async function executeWithAuth<T>(
-    operation: (supabase: any, user: any) => Promise<T>
+    operation: (supabase: unknown, user: unknown) => Promise<T>
 ): Promise<{ data: T | null; error: string | null }> {
     try {
         const user = await getCurrentUser()
