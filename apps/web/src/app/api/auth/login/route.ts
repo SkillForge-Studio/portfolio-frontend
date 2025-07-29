@@ -109,7 +109,6 @@ export async function POST(request: NextRequest) {
         // Скидаємо лічильник спроб при успішному вході
         loginAttempts.delete(ip)
 
-        // Логуємо успішний вхід
         console.log('Successful login:', {
             userId: data.user?.id,
             email: validatedData.email,

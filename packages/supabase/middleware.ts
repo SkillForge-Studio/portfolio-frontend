@@ -1,11 +1,10 @@
-// supabase/packages/middleware.ts
+// packages/supabase/middleware.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Список маршрутів які потребують автентифікації
 const PROTECTED_PATHS = [
     '/dashboard',
     '/profile',
@@ -13,7 +12,6 @@ const PROTECTED_PATHS = [
     '/admin'
 ]
 
-// Додаткова перевірка ролей
 const ADMIN_PATHS = ['/admin']
 
 export async function updateSession(request: NextRequest) {
@@ -31,19 +29,22 @@ export async function updateSession(request: NextRequest) {
                 },
                 setAll(cookiesToSet) {
                     cookiesToSet.forEach(({ name, value, options }) => {
+                        // ВАЖЛИВО: Правильні налаштування cookies
                         supabaseResponse.cookies.set(name, value, {
                             ...options,
                             secure: process.env.NODE_ENV === 'production',
                             httpOnly: true,
                             sameSite: 'lax',
-                            path: '/'
+                            path: '/',
+                            // Додаємо максимальний термін для auth cookies
+                            maxAge: name.includes('auth-token') ? 60 * 60 * 24 * 7 : options?.maxAge // 7 днів для auth токенів
                         })
                     })
                 },
             },
         })
 
-        // Отримуємо користувача
+        // КРИТИЧНО: Обов'язково викликаємо getUser для оновлення сесії
         const {
             data: { user },
             error
@@ -51,16 +52,24 @@ export async function updateSession(request: NextRequest) {
 
         const { pathname } = request.nextUrl
 
+        console.log('Supabase middleware:', {
+            pathname,
+            hasUser: !!user,
+            error: error?.message,
+            cookies: request.cookies.getAll().map(c => c.name),
+            timestamp: new Date().toISOString()
+        })
+
         // Якщо помилка при отриманні користувача і це захищений маршрут
         if (error && PROTECTED_PATHS.some(path => pathname.startsWith(path))) {
-            console.error('Auth error:', error)
+            console.error('Auth error on protected path:', error)
             const url = request.nextUrl.clone()
             url.pathname = '/auth'
             url.searchParams.set('redirect', pathname)
             return NextResponse.redirect(url)
         }
 
-        // Якщо користувач не авторизований і намагається зайти на захищений маршрут
+        // Перенаправлення неавторизованих користувачів з захищених маршрутів
         if (!user && PROTECTED_PATHS.some(path => pathname.startsWith(path))) {
             const url = request.nextUrl.clone()
             url.pathname = '/auth'
@@ -70,7 +79,6 @@ export async function updateSession(request: NextRequest) {
 
         // Перевірка ролей для admin маршрутів
         if (user && ADMIN_PATHS.some(path => pathname.startsWith(path))) {
-            // Отримуємо метадані користувача для перевірки ролі
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('role')
@@ -82,9 +90,9 @@ export async function updateSession(request: NextRequest) {
             }
         }
 
-        // Якщо користувач авторизований і намагається зайти на auth сторінки
+        // Перенаправлення авторизованих користувачів з auth сторінок
         if (user && (pathname.startsWith('/auth') || pathname.startsWith('/login'))) {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
+            return NextResponse.redirect(new URL('/', request.url))
         }
 
         // Логування для моніторингу
@@ -94,7 +102,6 @@ export async function updateSession(request: NextRequest) {
                 email: user.email,
                 path: pathname,
                 ip: request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown',
-                userAgent: request.headers.get('user-agent'),
                 timestamp: new Date().toISOString()
             })
         }
@@ -104,7 +111,7 @@ export async function updateSession(request: NextRequest) {
     } catch (error) {
         console.error('Session update error:', error)
 
-        // У випадку критичної помилки перенаправляємо на auth
+        // У випадку критичної помилки
         const url = request.nextUrl.clone()
         url.pathname = '/auth'
         url.searchParams.set('error', 'session_error')

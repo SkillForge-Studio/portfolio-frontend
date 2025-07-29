@@ -1,14 +1,15 @@
+// apps/web/src/app/api/auth/oauth/route.ts
+import { createClient } from '@supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase'
 import { z } from 'zod'
-import {getURL} from "../../../../../lib/getURLs";
+import { getURL } from '../../../../../lib/getURLs'
 
+// Валідація OAuth запитів
 const oauthSchema = z.object({
-    provider: z.enum(['google', 'github', 'facebook']),
-    redirectTo: z.string().url('Невірний URL для редиректу').optional()
+    provider: z.enum(['google', 'github', 'facebook', 'discord']),
+    redirectTo: z.string().url().optional()
 })
 
-// Rate limiting для OAuth запитів
 const oauthAttempts = new Map<string, { count: number; lastAttempt: number }>()
 
 function checkOAuthRateLimit(ip: string): boolean {
@@ -26,8 +27,7 @@ function checkOAuthRateLimit(ip: string): boolean {
         return true
     }
 
-    // Максимум 10 OAuth спроб за 5 хвилин
-    if (attempts.count >= 10) {
+    if (attempts.count >= 5) {
         return false
     }
 
@@ -38,54 +38,24 @@ function checkOAuthRateLimit(ip: string): boolean {
 
 export async function POST(request: NextRequest) {
     try {
-        // Базові перевірки безпеки
-        const contentType = request.headers.get('content-type')
-        if (!contentType?.includes('application/json')) {
-            return NextResponse.json(
-                { success: false, error: 'Невірний Content-Type' },
-                { status: 400 }
-            )
-        }
-
-        const requestedWith = request.headers.get('X-Requested-With')
-        if (requestedWith !== 'XMLHttpRequest') {
-            return NextResponse.json(
-                { success: false, error: 'Forbidden' },
-                { status: 403 }
-            )
-        }
-
-        // Rate limiting
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
             request.headers.get('x-real-ip') ||
             '127.0.0.1'
 
         if (!checkOAuthRateLimit(ip)) {
+            console.warn('OAuth rate limit exceeded:', { ip })
             return NextResponse.json(
-                { success: false, error: 'Занадто багато OAuth спроб. Спробуйте через 5 хвилин' },
+                { success: false, error: 'Занадто багато спроб. Спробуйте через 5 хвилин' },
                 { status: 429 }
             )
         }
 
-        // const supabase = await createServerClient()
-        //
-        // const { data, error } = await supabase.auth.signInWithOAuth({
-        //     provider: 'google',
-        //     options: {
-        //         redirectTo: `${request.nextUrl.origin}/api/auth/callback`
-        //     }
-        // })
-
-        // Валідація даних
         const body = await request.json()
         const validatedData = oauthSchema.parse(body)
 
-        const supabase = await createServerClient()
+        const supabase = await createClient()
 
-        // Створюємо OAuth URL
-        // const redirectTo = validatedData.redirectTo || `${request.nextUrl.origin}/auth/callback`
-        const redirectTo = `${getURL()}/api/auth/oauth/callback`
-
+        const redirectTo = `${getURL()}api/auth/callback`
 
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: validatedData.provider,
@@ -112,6 +82,7 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             )
         }
+
         // Логування успішної ініціалізації
         console.log('OAuth initiated:', {
             provider: validatedData.provider,

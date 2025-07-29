@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import {getURL} from "../../../lib/getURLs";
 
 // Типи для валідації
 interface AuthFormData {
@@ -109,7 +110,7 @@ export default function AuthPage() {
                 },
                 body: JSON.stringify({
                     provider,
-                    redirectTo: `${window.location.origin}/auth/callback`
+                    redirectTo: `${getURL()}api/auth/callback`
                 }),
                 signal: controller.signal,
                 credentials: 'same-origin',

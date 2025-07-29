@@ -1,7 +1,10 @@
-// apps/web/app/api/auth/callback/route.ts
+// apps/web/src/app/api/auth/callback/route.ts
 import { createClient } from '@supabase/server'
+import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
-import {getURL} from "../../../../../lib/getURLs";
+import { getURL } from '../../../../../lib/getURLs'
+import { SupabaseClient } from '@supabase/supabase-js'
+import {User} from "@supabase/auth-helpers-nextjs";
 
 // Rate limiting для OAuth callbacks
 const callbackAttempts = new Map<string, { count: number; lastAttempt: number }>()
@@ -31,13 +34,51 @@ function checkCallbackRateLimit(ip: string): boolean {
     return true
 }
 
+// Функція для створення профілю користувача якщо не існує
+async function ensureUserProfile(supabase: SupabaseClient, user: User) {
+    try {
+        const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', user.id)
+            .single()
+
+        if (!existingProfile) {
+            // Створюємо профіль з OAuth даними
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .insert([{
+                    id: user.id,
+                    email: user.email,
+                    full_name: user.user_metadata?.full_name || user.user_metadata?.name,
+                    avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture,
+                    provider: user.app_metadata?.provider,
+                    role: 'user',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }])
+
+            if (profileError) {
+                console.error('Profile creation error:', profileError)
+            } else {
+                console.log('Profile created for OAuth user:', {
+                    userId: user.id,
+                    email: user.email,
+                    provider: user.app_metadata?.provider
+                })
+            }
+        }
+    } catch (error) {
+        console.error('Profile creation failed:', error)
+    }
+}
+
 export async function GET(request: NextRequest) {
     try {
         const requestUrl = new URL(request.url)
         const code = requestUrl.searchParams.get('code')
         const error = requestUrl.searchParams.get('error')
         const errorDescription = requestUrl.searchParams.get('error_description')
-        const state = requestUrl.searchParams.get('state')
 
         // Отримуємо IP для rate limiting
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
@@ -59,18 +100,17 @@ export async function GET(request: NextRequest) {
                 timestamp: new Date().toISOString()
             })
 
-            let userFriendlyError = 'oauth_error'
-            switch (error) {
-                case 'access_denied':
-                    userFriendlyError = 'access_denied'
-                    break
-                case 'invalid_request':
-                    userFriendlyError = 'invalid_request'
-                    break
-                default:
-                    userFriendlyError = 'oauth_error'
+            const errorMessages: Record<string, string> = {
+                'access_denied': 'access_denied',
+                'invalid_request': 'invalid_request',
+                'unauthorized_client': 'unauthorized_client',
+                'unsupported_response_type': 'unsupported_response_type',
+                'invalid_scope': 'invalid_scope',
+                'server_error': 'server_error',
+                'temporarily_unavailable': 'temporarily_unavailable'
             }
 
+            const userFriendlyError = errorMessages[error] || 'oauth_error'
             return NextResponse.redirect(`${getURL()}auth?error=${userFriendlyError}`)
         }
 
@@ -110,6 +150,9 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(`${getURL()}auth?error=no_session`)
         }
 
+        // Створюємо профіль користувача якщо потрібно
+        await ensureUserProfile(supabase, data.user)
+
         // Логуємо успішний OAuth login
         console.log('Successful OAuth login:', {
             userId: data.user.id,
@@ -122,8 +165,36 @@ export async function GET(request: NextRequest) {
         // Очищуємо rate limit для успішних спроб
         callbackAttempts.delete(ip)
 
-        // Створюємо response з встановленням cookies
-        const response = NextResponse.redirect(`${getURL()}`)
+        // ВАЖЛИВО: Створюємо response з правильним встановленням cookies
+        const response = NextResponse.redirect(getURL())
+
+        // Отримуємо оновлений supabase client для встановлення cookies
+        const updatedSupabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    getAll() {
+                        return []
+                    },
+                    setAll(cookiesToSet) {
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            response.cookies.set(name, value, {
+                                ...options,
+                                secure: process.env.NODE_ENV === 'production',
+                                httpOnly: true,
+                                sameSite: 'lax' as const,
+                                path: '/',
+                                maxAge: options?.maxAge || 60 * 60 * 24 * 7 // 7 днів
+                            })
+                        })
+                    },
+                },
+            }
+        )
+
+        // Викликаємо getSession для встановлення cookies
+        await updatedSupabase.auth.getSession()
 
         // Встановлюємо додаткові security headers
         response.headers.set('X-Content-Type-Options', 'nosniff')
@@ -143,141 +214,3 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${getURL()}auth?error=server_error`)
     }
 }
-
-// POST endpoint для перевірки стану автентифікації
-export async function POST(request: NextRequest) {
-    try {
-        // CSRF захист
-        const requestedWith = request.headers.get('X-Requested-With')
-        if (requestedWith !== 'XMLHttpRequest') {
-            return NextResponse.json(
-                { success: false, error: 'Forbidden' },
-                { status: 403 }
-            )
-        }
-
-        const supabase = await createClient()
-        const { data: { user }, error } = await supabase.auth.getUser()
-
-        if (error) {
-            console.error('Get user error:', error)
-            return NextResponse.json(
-                { success: false, error: 'Не авторизований' },
-                { status: 401 }
-            )
-        }
-
-        if (!user) {
-            return NextResponse.json(
-                { success: false, error: 'Користувач не знайдений' },
-                { status: 401 }
-            )
-        }
-
-        // Повертаємо мінімальну інформацію про користувача
-        return NextResponse.json({
-            success: true,
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.user_metadata?.full_name || user.user_metadata?.name,
-                avatar: user.user_metadata?.avatar_url,
-                provider: user.app_metadata?.provider,
-                created_at: user.created_at,
-                last_sign_in: user.last_sign_in_at
-            }
-        })
-
-    } catch (error) {
-        console.error('User info error:', error)
-        return NextResponse.json(
-            { success: false, error: 'Помилка отримання даних користувача' },
-            { status: 500 }
-        )
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-// import { createServerClient } from '@supabase'
-// import { NextRequest, NextResponse } from 'next/server'
-//
-// export async function GET(request: NextRequest) {
-//     try {
-//         const requestUrl = new URL(request.url)
-//         const code = requestUrl.searchParams.get('code')
-//         const origin = requestUrl.origin
-//
-//         if (code) {
-//             const supabase = await createServerClient()
-//
-//             const { error } = await supabase.auth.exchangeCodeForSession(code)
-//
-//             if (error) {
-//                 console.error('Auth callback error:', error)
-//                 return NextResponse.redirect(`${origin}/auth?error=callback_error`)
-//             }
-//         }
-//
-//         return NextResponse.redirect(`${origin}/`)
-//     } catch (error) {
-//         console.error('Callback processing error:', error)
-//         return NextResponse.redirect(`${request.nextUrl.origin}/auth?error=server_error`)
-//     }
-// }
-//
-// export async function POST() {
-//     try {
-//         const supabase = await createServerClient()
-//         const { data: { user }, error } = await supabase.auth.getUser()
-//
-//         if (error) {
-//             return NextResponse.json(
-//                 { success: false, error: 'Не авторизований' },
-//                 { status: 401 }
-//             )
-//         }
-//
-//         return NextResponse.json({
-//             success: true,
-//             user: {
-//                 id: user?.id,
-//                 email: user?.email,
-//                 created_at: user?.created_at
-//             }
-//         })
-//     } catch (error) {
-//         console.error('User info error:', error)
-//         return NextResponse.json(
-//             { success: false, error: 'Помилка отримання даних користувача' },
-//             { status: 500 }
-//         )
-//     }
-// }
-
-
-
-
-
-
-
-
-// // apps/web/app/api/auth/callback/route.ts
-// import { createServerClient } from '@supabase'
-// import { cookies } from 'next/headers'
-// import { NextResponse } from 'next/server'
-//
-// export async function GET() {
-//     const supabase = await createServerClient()
-//     const { data: { user } } = await supabase.auth.getUser()
-//     return NextResponse.json({ ok: true, user })
-// }

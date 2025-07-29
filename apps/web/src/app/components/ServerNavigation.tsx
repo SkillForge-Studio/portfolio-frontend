@@ -1,18 +1,17 @@
-// apps/web/app/components/ServerNavigation.tsx
-
-import { createServerClient } from '@supabase'
-import { cookies } from 'next/headers'
+// apps/web/src/app/components/ServerNavigation.tsx
+import { createClient } from '@supabase/server'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import LogoutButton from "@/app/components/LogoutButton";
+import LogoutButton from "@/app/components/LogoutButton"
+import {getURL} from "../../../lib/getURLs";
 
 export default async function ServerNavigation() {
-    const supabase = await createServerClient()
+    const supabase = await createClient()
+
+    // Отримуємо користувача та сесію
     const { data: { user } } = await supabase.auth.getUser()
-    // const { data: sessionData } = await supabase.auth.getSession()
+    const { data: { session } } = await supabase.auth.getSession()
 
-
-    if (!user) {
+    if (!user || !session) {
         return (
             <Link href="/auth">
                 <button style={{
@@ -24,76 +23,23 @@ export default async function ServerNavigation() {
                     cursor: 'pointer',
                     fontSize: '0.9rem',
                     transition: 'all 0.3s'
-                }}>Увійти / Зареєструватися</button>
+                }}>
+                    Увійти / Зареєструватися
+                </button>
             </Link>
         )
     }
 
     return (
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <span style={{
-                alignContent: 'center',
-            }}>{user.email}</span>
+                fontSize: '0.9rem',
+                color: '#171717',
+                fontWeight: '500'
+            }}>
+                {user.email}
+            </span>
             <LogoutButton />
         </div>
     )
 }
-
-
-
-
-
-// 'use client'
-//
-// import { useEffect, useState } from 'react'
-// import { createBrowserClient } from '@supabase'
-// import { useRouter } from 'next/navigation'
-// import type { User } from '@supabase/supabase-js'
-//
-// export default function ServerNavigation() {
-//     const [user, setUser] = useState<User | null | undefined>(undefined)
-//     const supabase = createBrowserClient()
-//     const router = useRouter()
-//
-//     useEffect(() => {
-//         const getUser = async () => {
-//             const { data } = await supabase.auth.getUser()
-//             setUser(data.user)
-//         }
-//
-//         getUser()
-//
-//         const {
-//             data: { subscription },
-//         } = supabase.auth.onAuthStateChange((_event, session) => {
-//             setUser(session?.user ?? null)
-//         })
-//
-//         return () => subscription.unsubscribe()
-//     }, [])
-//
-//     const handleLogout = async () => {
-//         await supabase.auth.signOut()
-//         setUser(null)
-//         router.push('/')
-//     }
-//
-//     if (user === undefined) {
-//         return null
-//     }
-//
-//     if (!user) {
-//         return (
-//             <button onClick={() => router.push('/auth')}>
-//                 Увійти / Зареєструватися
-//             </button>
-//         )
-//     }
-//
-//     return (
-//         <div style={{ display: 'flex', gap: '1rem' }}>
-//             <span>{user.email}</span>
-//             <button onClick={handleLogout}>Вийти</button>
-//         </div>
-//     )
-// }
